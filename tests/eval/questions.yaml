@@ -1,0 +1,8 @@
+# Hand-written question / expected-paper-topic pairs for recall@K evaluation.
+# Replace expected_title_contains with real titles after first ingestion run.
+- query: "Каковы оптимальные EC и pH в питательном растворе для гидропонного салата?"
+  expected_title_contains: ["lettuce", "hydroponic"]
+- query: "Как дополнительное LED-освещение влияет на урожай томатов в теплицах?"
+  expected_title_contains: ["LED", "tomato", "greenhouse"]
+- query: "Какие почвенные микробные сообщества полезны для урожайности пшеницы?"
+  expected_title_contains: ["soil", "microbi", "wheat"]
