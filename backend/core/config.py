@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     api_port: int = 8000
     api_url: str = "http://api:8000"
 
+    # When true, POST /ingest runs the pipeline inline (no Redis/worker needed).
+    run_ingestion_inline: bool = False
+
 
 settings = Settings()
 

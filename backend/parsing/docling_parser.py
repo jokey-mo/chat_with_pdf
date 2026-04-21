@@ -34,6 +34,11 @@ class ParsedDoc:
 
 def parse(pdf_path: Path, figure_out_dir: Path | None = None) -> ParsedDoc:
     try:
+        import docling  # noqa: F401
+    except ImportError:
+        log.info("docling not installed; using pymupdf4llm")
+        return _parse_pymupdf(pdf_path)
+    try:
         return _parse_docling(pdf_path, figure_out_dir)
     except Exception as e:
         log.warning("docling failed for %s: %s; falling back to pymupdf4llm", pdf_path, e)

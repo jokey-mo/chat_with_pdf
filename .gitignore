@@ -11,6 +11,8 @@ __pycache__/
 data/pdfs/*
 data/figures/*
 data/paperqa/*
+data/qdrant/
+data/app.db
 !data/pdfs/.gitkeep
 !data/figures/.gitkeep
 !data/paperqa/.gitkeep

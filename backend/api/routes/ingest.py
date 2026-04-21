@@ -5,9 +5,9 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from backend.api.schemas import IngestionRunOut
+from backend.core.config import settings
 from backend.db.models import IngestionRun, Notebook
 from backend.db.session import get_db
-from backend.scheduler.jobs import enqueue_ingestion
 
 router = APIRouter(tags=["ingest"])
 
@@ -17,6 +17,17 @@ def trigger(notebook_id: int, db: Session = Depends(get_db)) -> dict:
     nb = db.get(Notebook, notebook_id)
     if nb is None:
         raise HTTPException(404, "notebook not found")
+    if settings.run_ingestion_inline:
+        from backend.ingestion.pipeline import run_ingestion
+
+        import threading
+
+        threading.Thread(
+            target=run_ingestion, args=(notebook_id,), kwargs={"enable_figures": False}, daemon=True
+        ).start()
+        return {"notebook_id": notebook_id, "status": "started", "mode": "inline"}
+    from backend.scheduler.jobs import enqueue_ingestion
+
     job = enqueue_ingestion(notebook_id)
     return {"job_id": job.id, "notebook_id": notebook_id, "status": "queued"}
 

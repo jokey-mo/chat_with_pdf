@@ -17,7 +17,12 @@ _client: QdrantClient | None = None
 def client() -> QdrantClient:
     global _client
     if _client is None:
-        _client = QdrantClient(url=settings.qdrant_url, timeout=30)
+        url = settings.qdrant_url
+        if url.startswith("file://") or url == ":memory:":
+            path = None if url == ":memory:" else url.removeprefix("file://")
+            _client = QdrantClient(path=path) if path else QdrantClient(location=":memory:")
+        else:
+            _client = QdrantClient(url=url, timeout=30)
     return _client
 
 
