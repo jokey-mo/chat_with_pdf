@@ -17,6 +17,15 @@ def trigger(notebook_id: int, db: Session = Depends(get_db)) -> dict:
     nb = db.get(Notebook, notebook_id)
     if nb is None:
         raise HTTPException(404, "notebook not found")
+
+    active = db.execute(
+        select(IngestionRun)
+        .where(IngestionRun.notebook_id == notebook_id, IngestionRun.finished_at.is_(None))
+        .limit(1)
+    ).scalar_one_or_none()
+    if active is not None:
+        raise HTTPException(409, "ingestion already in progress")
+
     if settings.run_ingestion_inline:
         from backend.ingestion.pipeline import run_ingestion
 
@@ -34,6 +43,8 @@ def trigger(notebook_id: int, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/notebooks/{notebook_id}/runs", response_model=list[IngestionRunOut])
 def list_runs(notebook_id: int, db: Session = Depends(get_db)) -> list[IngestionRun]:
+    if db.get(Notebook, notebook_id) is None:
+        raise HTTPException(404, "notebook not found")
     return list(
         db.execute(
             select(IngestionRun)

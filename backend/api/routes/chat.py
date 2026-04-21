@@ -7,11 +7,13 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from backend.api.schemas import ChatRequest
+from backend.core.logging import get_logger
 from backend.db.models import Notebook
 from backend.db.session import get_db
 from backend.rag.chat import stream_chat
 
 router = APIRouter(tags=["chat"])
+log = get_logger(__name__)
 
 
 @router.post("/chat")
@@ -23,9 +25,13 @@ async def chat(req: ChatRequest, db: Session = Depends(get_db)) -> StreamingResp
     messages = [{"role": m.role, "content": m.content} for m in req.messages]
 
     async def gen():
-        async for event in stream_chat(
-            db, req.notebook_id, messages, model=req.model or nb.openrouter_model
-        ):
-            yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        try:
+            async for event in stream_chat(
+                db, req.notebook_id, messages, model=req.model or nb.openrouter_model
+            ):
+                yield f"data: {json.dumps(event, ensure_ascii=False)}\n\n"
+        except Exception:
+            log.exception("stream_chat failed for notebook %s", req.notebook_id)
+            yield f"data: {json.dumps({'type': 'error', 'message': 'internal error'})}\n\n"
 
     return StreamingResponse(gen(), media_type="text/event-stream")
