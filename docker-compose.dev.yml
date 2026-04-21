@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    image: agro-rag-dev:latest
+    container_name: agro-rag-dev
+    env_file: .env
+    environment:
+      POSTGRES_DSN: sqlite:////data/app.db
+      QDRANT_URL: file:///data/qdrant
+      DATA_DIR: /data
+      RUN_INGESTION_INLINE: "true"
+      API_URL: http://localhost:8000
+    volumes:
+      - ./data:/data
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    restart: unless-stopped

@@ -26,15 +26,30 @@ Scheduler ──────────► RQ/Redis (по cron)
 
 ## Быстрый старт
 
+### Вариант 1 — dev-контейнер (одна команда, для теста на ноутбуке)
+
+Один образ со всем внутри: FastAPI + Streamlit + SQLite + embedded Qdrant. Без Postgres/Redis/Docling, парсинг через PyMuPDF4LLM. Идеально для проверки на MacBook / Windows / Linux.
+
 ```bash
 cp .env.example .env
 # заполните: OPENROUTER_API_KEY, UNPAYWALL_EMAIL, OPENALEX_EMAIL
 
-docker compose up -d postgres qdrant redis
-docker compose up -d api worker scheduler frontend
+docker compose -f docker-compose.dev.yml up --build
 ```
 
 UI: [http://localhost:8501](http://localhost:8501) · API: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+Данные сохраняются в `./data/` (SQLite, Qdrant, PDF). Ограничения dev-режима: нет cron-scheduler'а и фонового worker'а — ингестия запускается вручную из UI и выполняется inline.
+
+### Вариант 2 — полный стек (production-like)
+
+```bash
+cp .env.example .env
+# + поменяйте POSTGRES_DSN / QDRANT_URL / REDIS_URL на сервисные hostnames
+
+docker compose up -d postgres qdrant redis
+docker compose up -d api worker scheduler frontend
+```
 
 ## Использование
 
