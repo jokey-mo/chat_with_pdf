@@ -156,12 +156,30 @@ def _linkify_markers(text: str, citations: list[dict]) -> str:
 
 
 def ingestion_dashboard(nb: dict):
-    with st.expander("⚙️ Ингестия и статьи"):
+    with st.expander("⚙️ Поиск и загрузка статей"):
         col1, col2 = st.columns([1, 3])
         with col1:
-            if st.button("▶ Запустить ингестию", type="primary"):
-                res = api_post(f"/notebooks/{nb['id']}/ingest")
-                st.success(f"Задача: {res['job_id']}")
+            if st.button("▶ Найти и загрузить статьи", type="primary"):
+                import time
+                runs_before = api_get(f"/notebooks/{nb['id']}/runs")
+                latest_before = runs_before[0]["started_at"] if runs_before else None
+
+                api_post(f"/notebooks/{nb['id']}/ingest")
+
+                with st.spinner("Идёт поиск и загрузка статей…"):
+                    for _ in range(150):  # max 5 min
+                        time.sleep(2)
+                        runs = api_get(f"/notebooks/{nb['id']}/runs")
+                        if runs and runs[0]["started_at"] != latest_before and runs[0].get("finished_at"):
+                            break
+
+                r = runs[0] if runs else {}
+                st.success(
+                    f"Готово! Найдено: {r.get('n_found', 0)}, "
+                    f"загружено: {r.get('n_embedded', 0)}, "
+                    f"ошибок: {r.get('n_failed', 0)}"
+                )
+                st.rerun()
             if st.button("🗑 Удалить ноутбук"):
                 api_delete(f"/notebooks/{nb['id']}")
                 st.rerun()

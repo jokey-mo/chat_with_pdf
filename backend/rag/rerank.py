@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import threading
 from dataclasses import dataclass
 
 from backend.core.config import settings
@@ -8,6 +9,7 @@ from backend.core.logging import get_logger
 log = get_logger(__name__)
 
 _reranker = None
+_reranker_lock = threading.Lock()
 
 
 @dataclass
@@ -22,14 +24,17 @@ def _get_reranker():
     global _reranker
     if _reranker is not None:
         return _reranker
-    try:
-        from FlagEmbedding import FlagReranker
+    with _reranker_lock:
+        if _reranker is not None:
+            return _reranker
+        try:
+            from FlagEmbedding import FlagReranker
 
-        _reranker = FlagReranker("BAAI/bge-reranker-v2-m3", use_fp16=False)
-        return _reranker
-    except Exception as e:
-        log.warning("reranker unavailable: %s", e)
-        return None
+            _reranker = FlagReranker("BAAI/bge-reranker-v2-m3", use_fp16=False)
+            return _reranker
+        except Exception as e:
+            log.warning("reranker unavailable: %s", e)
+            return None
 
 
 def rerank(query: str, hits: list[Hit], top: int | None = None) -> list[Hit]:
